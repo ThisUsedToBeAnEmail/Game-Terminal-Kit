@@ -4,7 +4,7 @@ use 5.014;
 use strict;
 use warnings;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 sub give_back {
 	my (@held) = @_;
@@ -48,7 +48,7 @@ Game::Terminal::Kit::Run - give the terminal back on every way out
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 

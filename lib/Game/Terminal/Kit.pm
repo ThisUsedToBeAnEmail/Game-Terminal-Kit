@@ -4,7 +4,7 @@ use 5.014;
 use strict;
 use warnings;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 1;
 
@@ -16,7 +16,7 @@ Game::Terminal::Kit - kit for creating terminal games
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 
@@ -87,6 +87,15 @@ What just happened, drawn in every frame so a redraw cannot lose it.
 
 Undo and redo, a turn at a time, kept in a L<State::Store>.
 
+=item L<Game::Terminal::Kit::Save>
+
+A game written to a file with its undo and redo, to carry on with
+C<--resume>; and the C<--save>, C<--resume> and C<--replay> every game takes.
+
+=item L<Game::Terminal::Kit::Replay>
+
+A saved game, watched a step at a time.
+
 =item L<Game::Terminal::Kit::Ticker>
 
 When the next step of a game that moves on its own is due.
@@ -112,7 +121,7 @@ being played.
 
 =head2 What it needs
 
-L<Object::Proto::Sugar> and L<State::Store>. L<Term::ReadKey> is used when it
+L<Object::Proto::Sugar> and L<State::Store> 0.02. L<Term::ReadKey> is used when it
 is installed; without it a game still runs, a line at a time.
 
 =head1 SEE ALSO

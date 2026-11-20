@@ -182,4 +182,28 @@ subtest 'run' => sub {
 	is_deeply [form()->run($keys, $screen)], ['quit'], 'keys running out in the line quits';
 };
 
+subtest 'actions under Play' => sub {
+	plan tests => 11;
+	my $form = form(actions => [ { name => 'resume', label => 'Resume a saved game' }, { name => 'replay' } ], legend => []);
+	my @lines = $form->lines;
+	is_deeply [@lines[-3 .. -1]], [' > Play', '   Resume a saved game', '   replay'], 'listed under Play, the label or the name';
+	is $form->at, 6, 'the cursor still starts on Play';
+	is_deeply press($form, 'down'), ['moved'], 'down from Play';
+	like(($form->lines)[-2], qr/^ > Resume a saved game$/, 'is the first action');
+	is_deeply press($form, 'enter'), ['key', 'resume'], 'enter says which';
+	is_deeply press($form, 'down', ' '), ['key', 'replay'], 'and space on the next';
+	is_deeply press($form, 'down'), ['moved'], 'down from the last action';
+	is $form->at, 0, 'goes round to the first field';
+	is_deeply press($form, 'up'), ['moved'], 'and up from the first';
+	is $form->at, 8, 'to the last action';
+	is_deeply press($form, 'left'), ['none'], 'a key that does nothing to an action';
+};
+
+subtest 'an action chosen through run' => sub {
+	plan tests => 1;
+	my ($keys, $screen) = kit(keys => "\e[B\r");
+	my $form = form(actions => [ { name => 'resume' } ]);
+	is_deeply [$form->run($keys, $screen)], ['key', 'resume'], 'run gives back the action';
+};
+
 done_testing;

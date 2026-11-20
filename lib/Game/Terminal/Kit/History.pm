@@ -6,9 +6,10 @@ use warnings;
 
 use Carp ();
 use Object::Proto::Sugar -types;
-use State::Store;
+use State::Store 0.02;
+use Game::Terminal::Kit::Save;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has [qw/save load/] => (
 	is => 'rw',
@@ -31,6 +32,22 @@ has begun => (
 	default => 0
 );
 
+has resumed => (
+	is => 'rw',
+	isa => Bool,
+	default => 0
+);
+
+has [qw/name version file/] => (
+	is => 'rw',
+	isa => Str
+);
+
+has settings => (
+	is => 'rw',
+	isa => HashRef
+);
+
 sub BUILD {
 	my ($self) = @_;
 	Carp::croak('Game::Terminal::Kit::History: save and load are both needed')
@@ -51,7 +68,10 @@ sub _snapshot {
 
 sub start {
 	my ($self, $game) = @_;
-	$self->store->set($self->_snapshot($game));
+	my $text = $self->_snapshot($game);
+	return $self if $self->resumed && $text eq $self->store->current;
+	$self->resumed(0);
+	$self->store->set($text);
 	$self->store->clear_history;
 	$self->begun(0);
 	return $self;
@@ -59,7 +79,9 @@ sub start {
 
 sub record {
 	my ($self, $game) = @_;
-	$self->store->set($self->_snapshot($game));
+	my $text = $self->_snapshot($game);
+	$self->resumed(0) if $text ne $self->store->current;
+	$self->store->set($text);
 	return $self;
 }
 
@@ -79,12 +101,14 @@ sub text {
 sub undo {
 	my ($self, $steps) = @_;
 	return undef unless $self->store->undo(defined $steps ? $steps : 1);
+	$self->resumed(0);
 	return $self->_rebuild;
 }
 
 sub redo {
 	my ($self, $steps) = @_;
 	return undef unless $self->store->redo(defined $steps ? $steps : 1);
+	$self->resumed(0);
 	return $self->_rebuild;
 }
 
@@ -93,6 +117,58 @@ sub _rebuild {
 	my $game = $self->load->($self->store->current);
 	Carp::croak('Game::Terminal::Kit::History: load gave nothing back for a saved game')
 		unless defined $game;
+	return $game;
+}
+
+sub steps {
+	my ($self) = @_;
+	my $store = $self->store;
+	return $store->undo_count + 1 + $store->redo_count unless wantarray;
+	return ($store->past, $store->current, $store->future);
+}
+
+sub at {
+	my ($self) = @_;
+	return $self->store->undo_count;
+}
+
+sub saved {
+	my ($self, @with) = @_;
+	$self->record(shift @with) if @with % 2;
+	my %with = @with;
+	my $store = $self->store;
+	return Game::Terminal::Kit::Save->new(
+		(map { defined $self->$_ ? ($_ => $self->$_) : () } qw/name version file/),
+		settings => { %{ $self->settings || {} } },
+		limit => $self->limit,
+		past => [ $store->past ],
+		current => $store->current,
+		future => [ $store->future ],
+		%with,
+	);
+}
+
+sub resume {
+	my ($self, $save) = @_;
+	Carp::croak('Game::Terminal::Kit::History: resume needs a Game::Terminal::Kit::Save')
+		unless ref $save && eval { $save->isa('Game::Terminal::Kit::Save') };
+	Carp::croak('Game::Terminal::Kit::History: this is a history of ' . $self->name
+		. ', and that is a save of ' . $save->name)
+		if defined $self->name && $self->name ne $save->name;
+	my $limit = defined $save->limit ? $save->limit : $self->limit;
+	my $store = State::Store->new($save->current,
+		past => $save->past, future => $save->future,
+		history => $limit > 0 ? $limit : undef);
+	my $game = $self->load->($store->current);
+	Carp::croak('Game::Terminal::Kit::History: load gave nothing back for the saved game')
+		unless defined $game;
+	$self->store($store);
+	$self->limit($limit);
+	$self->name($save->name) unless defined $self->name;
+	$self->file($save->file) if defined $save->file;
+	$self->settings({ %{ $save->settings } }) unless $self->settings;
+	$self->begun(1);
+	$self->resumed(1);
 	return $game;
 }
 
@@ -129,7 +205,7 @@ Game::Terminal::Kit::History - take a turn back, and play it again
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 
@@ -180,6 +256,26 @@ two people play at one keyboard, every move is a step.
 
 A move made after an undo throws away what could have been redone.
 
+=head2 Saved, and carried on
+
+    # S, or "save": the history to a file, the game as it is now included
+    $history->saved($game)->write_file($path);
+
+    # --resume: the history back, and the game as it was saved
+    my $save = Game::Terminal::Kit::Save->read_file($path, game => 'reversi');
+    $self->game($history->resume($save));
+    ...
+    $history->start($self->game);      # keeps what resume put back
+
+L</saved> makes a L<Game::Terminal::Kit::Save> of every step, the ones that
+could be redone included, and L</resume> puts them back, so a move made
+before the game was saved can be taken back after it was carried on. The
+file is L<Game::Terminal::Kit::Save>'s; nothing here reads or writes one.
+
+A game that calls L</start> and L</turn> as it always has needs nothing
+more: after a resume, L</start> with the game resume gave back keeps the
+steps, and L</turn> records.
+
 =head1 ATTRIBUTES
 
 =head2 save
@@ -198,7 +294,27 @@ one more is made. 0 keeps every step.
 
 =head2 store
 
-The L<State::Store> underneath, made in C<new> unless one is given.
+The L<State::Store> underneath, made in C<new> unless one is given, and made
+again by L</resume>.
+
+=head2 name
+
+The game's name, such as C<reversi>: what a save says it is of. Needed for
+L</saved>; L</resume> refuses a save of another game.
+
+=head2 version
+
+The version of the game, written into a save.
+
+=head2 settings
+
+A hash of the settings the game is played with, by their command-line names,
+written into a save so that C<--resume> can play on with them.
+
+=head2 file
+
+The file the game was resumed from, or last saved to: where the next save
+goes when nobody says.
 
 =head1 METHODS
 
@@ -208,6 +324,10 @@ The L<State::Store> underneath, made in C<new> unless one is given.
 
 The game as it starts, or as it is when loaded: it becomes the current
 version, and there is nothing to undo or redo. Returns the history.
+
+After L</resume>, the game it gave back is not a new start: a C<start> with
+it keeps every step, however many times it is called, until the history
+changes. A C<start> with any other game is a new game, as always.
 
 =head2 record
 
@@ -252,11 +372,52 @@ Whether there is a step to take back or forward, and how many.
 What a game calls when the turn passes to the person at the keys. The first
 call after L</start> makes that position the beginning, so a move the program
 made before the person had a turn is never a step to take back; every later
-call is L</record>. Returns the history.
+call is L</record>. Returns the history. After L</resume> every call is
+L</record>: the beginning is the one the save had.
 
 =head2 begun
 
-True once L</turn> has been called since L</start>.
+True once L</turn> has been called since L</start>, and after L</resume>.
+
+=head2 resumed
+
+True from L</resume> until the history changes: a step recorded, an undo or
+a redo, or a L</start> with another game.
+
+=head2 steps
+
+    my @texts = $history->steps;
+    my $count = $history->steps;
+
+Every step kept, as C<save> wrote it, oldest first: the ones to undo, the
+current one, and the ones to redo. In scalar context, how many.
+
+=head2 at
+
+Where the current step is among L</steps>: how many can be undone.
+
+=head2 saved
+
+    my $save = $history->saved;
+    my $save = $history->saved($game);
+    my $save = $history->saved($game, file => $path);
+
+A L<Game::Terminal::Kit::Save> of the history: its L</name>, L</version>,
+L</settings>, L</file>, L</limit> and every step. Given the game, records it
+first, so that the save is of the game as it is now. Anything after the game
+is given to the save, in place of what the history says. Dies when the
+history has no L</name>. Reads and writes nothing: C<write_file> on what it
+gives back does.
+
+=head2 resume
+
+    my $game = $history->resume($save);
+
+Puts back the steps of a L<Game::Terminal::Kit::Save>, and returns the game
+as it was saved, built by C<load>. The save's limit, when it has one, becomes
+the history's, and its file the history's L</file>; its name and settings
+are taken when the history has none. Dies for a save of another game, and
+when C<load> gives back nothing.
 
 =head2 text
 
@@ -286,7 +447,8 @@ been taken back.
 
 =head1 SEE ALSO
 
-L<State::Store>, L<Game::Terminal::Kit>, L<Game::Terminal::Kit::Picker>.
+L<State::Store>, L<Game::Terminal::Kit>, L<Game::Terminal::Kit::Picker>,
+L<Game::Terminal::Kit::Save>, L<Game::Terminal::Kit::Replay>.
 
 =head1 AUTHOR
 

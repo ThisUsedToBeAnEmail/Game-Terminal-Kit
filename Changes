@@ -1,5 +1,9 @@
 Revision history for Game-Terminal-Kit
 
+0.06    2026-11-20
+	- Add save/load functionality
+	- Add LICENSE
+
 0.05    2026-10-14
 	- History: add turn, so a move made before the person's first turn is not a step
 	- History: undo and redo die when load gives back nothing

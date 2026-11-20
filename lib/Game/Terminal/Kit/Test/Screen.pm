@@ -8,7 +8,7 @@ use Exporter 'import';
 use Game::Terminal::Kit::Keys;
 use Game::Terminal::Kit::Screen;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 our @EXPORT_OK = qw/keysource capture typed kit within/;
 
@@ -80,7 +80,7 @@ Game::Terminal::Kit::Test::Screen - a keyboard and a screen for a test
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 

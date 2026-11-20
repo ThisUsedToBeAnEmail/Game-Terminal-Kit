@@ -8,7 +8,7 @@ use Object::Proto::Sugar -types;
 use Game::Terminal::Kit::Steer;
 use Game::Terminal::Kit::Widget;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has [qw/items head legend chosen/] => (
 	is => 'rw',
@@ -218,7 +218,7 @@ Game::Terminal::Kit::Picker - a list the player chooses from with the arrow keys
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 

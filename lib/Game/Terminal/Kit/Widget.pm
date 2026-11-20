@@ -4,7 +4,7 @@ use 5.014;
 use strict;
 use warnings;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 my %GOES_ON = map { $_ => 1 } qw/moved changed none/;
 my %CARRIES = map { $_ => 1 } qw/chosen key edit/;
@@ -50,7 +50,7 @@ Game::Terminal::Kit::Widget - what every widget of the kit has in common
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 

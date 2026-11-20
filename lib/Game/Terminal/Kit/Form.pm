@@ -9,7 +9,7 @@ use Game::Terminal::Kit::Line;
 use Game::Terminal::Kit::Options;
 use Game::Terminal::Kit::Widget;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 my $OWN = "the game\x27s own";
 
@@ -27,7 +27,7 @@ has [qw/title action/] => (
 	default => ''
 );
 
-has [qw/fields legend/] => (
+has [qw/fields legend actions/] => (
 	is => 'rw',
 	isa => ArrayRef
 );
@@ -50,6 +50,7 @@ has [qw/at log screen/] => (
 sub BUILD {
 	my ($self) = @_;
 	$self->fields([]) unless $self->fields;
+	$self->actions([]) unless $self->actions;
 	$self->values({}) unless $self->values;
 	$self->title('') unless defined $self->title;
 	$self->action('Play') unless defined $self->action && length $self->action;
@@ -107,6 +108,13 @@ sub lines {
 	push @lines, '', $at == @{$rows}
 		? ' ' . Game::Terminal::Kit::Widget::paint($self, '> ' . $self->action, '1;7')
 		: '   ' . Game::Terminal::Kit::Widget::paint($self, $self->action, $INK{action});
+	my $next = @{$rows} + 1;
+	for my $action (@{ $self->actions }) {
+		my $label = defined $action->{label} ? $action->{label} : $action->{name};
+		push @lines, $at == $next++
+			? ' ' . Game::Terminal::Kit::Widget::paint($self, "> $label", '1;7')
+			: "   $label";
+	}
 	my @said = $self->log ? $self->log->lines : ();
 	push @lines, '', @said if @said;
 	push @lines, '', map { Game::Terminal::Kit::Widget::paint($self, $_, $INK{legend}) } @{$self->legend}
@@ -161,7 +169,7 @@ sub step {
 	return ('chosen', $self->values) if $key eq 'p';
 
 	my $rows = $self->rows;
-	my $count = @{$rows} + 1;
+	my $count = @{$rows} + 1 + @{ $self->actions };
 	my $at = $self->at;
 	if ($key eq 'up' || $key eq 'k' || $key eq 'back_tab') {
 		$self->at(($at - 1) % $count);
@@ -173,6 +181,11 @@ sub step {
 	}
 	if ($at == @{$rows}) {
 		return ('chosen', $self->values) if $key eq 'enter' || $key eq ' ';
+		$self->_say('That key does nothing here');
+		return ('none');
+	}
+	if ($at > @{$rows}) {
+		return ('key', $self->actions->[ $at - @{$rows} - 1 ]{name}) if $key eq 'enter' || $key eq ' ';
 		$self->_say('That key does nothing here');
 		return ('none');
 	}
@@ -229,7 +242,7 @@ Game::Terminal::Kit::Form - a game's options, set before it starts
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 
@@ -273,8 +286,9 @@ It is one of the kit's widgets; see L<Game::Terminal::Kit::Widget>.
 Up and down, C<k> and C<j>, tab and shift-tab move between rows and go round.
 Left and right step a number, a choice, a flag or a bool. Enter or space
 steps a choice, a flag or a bool, and for a number or text asks for a line.
-Backspace or delete puts a row back to the game's own. Enter on the last
-row, or C<p> anywhere, answers. Escape or C<q> goes back.
+Backspace or delete puts a row back to the game's own. Enter on the action,
+or C<p> anywhere, answers. Enter on one of the L</actions> under it says
+which. Escape or C<q> goes back.
 
 =head1 ATTRIBUTES
 
@@ -298,11 +312,19 @@ and added to the command line: the way to an option the game did not list.
 
 =head2 action
 
-The label of the last row; C<Play> by default.
+The label of the row that answers; C<Play> by default.
+
+=head2 actions
+
+    actions => [ { name => 'resume', label => 'Resume a saved game' } ],
+
+Rows under the action for something else the player may do instead, such as
+carry on a saved game: each a hash of a C<name> and a C<label>, which is the
+name when it is not given. None by default.
 
 =head2 at
 
-The row under the cursor; the last by default.
+The row under the cursor; the action by default.
 
 =head2 legend
 
@@ -322,15 +344,16 @@ A L<Game::Terminal::Kit::Screen>, for colour.
 
 =head2 lines
 
-The title, the rows, the action, the log, the legend.
+The title, the rows, the action, the actions, the log, the legend.
 
 =head2 step
 
     my ($event, $value) = $form->step($key);
 
-C<chosen> with the values when the player starts the game; C<edit> with a
-field when a line of text is wanted for it, to be answered with L</set>;
-C<back>; C<quit>; C<moved>; C<changed>; C<none>.
+C<chosen> with the values when the player starts the game; C<key> with the
+name of one of the L</actions> chosen instead; C<edit> with a field when a
+line of text is wanted for it, to be answered with L</set>; C<back>;
+C<quit>; C<moved>; C<changed>; C<none>.
 
 =head2 run
 

@@ -7,7 +7,7 @@ use warnings;
 use Time::HiRes ();
 use Object::Proto::Sugar -types;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has clock => (
 	is => 'rw',
@@ -71,7 +71,7 @@ Game::Terminal::Kit::Ticker - when the next step of a game that moves is due
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 

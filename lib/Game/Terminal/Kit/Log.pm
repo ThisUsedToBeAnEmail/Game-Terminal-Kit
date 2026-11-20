@@ -6,7 +6,7 @@ use warnings;
 
 use Object::Proto::Sugar -types;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has keep => (
 	is => 'rw',
@@ -71,7 +71,7 @@ Game::Terminal::Kit::Log - what just happened, kept for the next frame
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 

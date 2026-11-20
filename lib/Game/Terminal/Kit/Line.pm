@@ -7,7 +7,7 @@ use warnings;
 use Object::Proto::Sugar -types;
 use Game::Terminal::Kit::Widget;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has [qw/prompt text/] => (
 	is => 'rw',
@@ -75,7 +75,7 @@ Game::Terminal::Kit::Line - a line of text typed a key at a time
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 

@@ -6,7 +6,7 @@ use warnings;
 
 use Object::Proto::Sugar -types;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has [qw/width height/] => (
 	is => 'rw',
@@ -134,7 +134,7 @@ Game::Terminal::Kit::Canvas - a grid of characters to draw a board on
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 

@@ -18,6 +18,8 @@ my @modules = qw/
 	Game::Terminal::Kit::Choose
 	Game::Terminal::Kit::Form
 	Game::Terminal::Kit::History
+	Game::Terminal::Kit::Save
+	Game::Terminal::Kit::Replay
 	Game::Terminal::Kit::Run
 	Game::Terminal::Kit::Options
 	Game::Terminal::Kit::Ticker

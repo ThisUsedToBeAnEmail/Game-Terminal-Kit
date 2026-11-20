@@ -14,12 +14,14 @@ use Game::Terminal::Kit::Line;
 use Game::Terminal::Kit::Log;
 use Game::Terminal::Kit::Options;
 use Game::Terminal::Kit::Picker;
+use Game::Terminal::Kit::Replay;
+use Game::Terminal::Kit::Save;
 use Game::Terminal::Kit::Screen;
 use Game::Terminal::Kit::Steer;
 use Game::Terminal::Kit::Test::Handle;
 use Game::Terminal::Kit::Ticker;
 
-plan tests => 13;
+plan tests => 16;
 
 my @fields = (
 	{ name => 'level', type => 'int', min => 1, max => 5, help => 'the strength of the bot' },
@@ -121,15 +123,42 @@ quietly 'a history kept, taken back and played again' => sub {
 	$history->undo(2); $history->redo; $history->legend; $history->clear;
 };
 
+quietly 'a save made, written as text and read back' => sub {
+	my $save = Game::Terminal::Kit::Save->new(name => 'moves', settings => { level => 2 },
+		past => ['a'], current => "a\nb", future => ['a b c']);
+	my $again = Game::Terminal::Kit::Save->from_text($save->as_text, game => 'moves');
+	$again->steps; $again->at; $again->count; $again->from_step(2);
+	Game::Terminal::Kit::Save::check_flags({ resume => 'x' });
+	Game::Terminal::Kit::Save::command('save there');
+	Game::Terminal::Kit::Save::default_file('moves');
+	Game::Terminal::Kit::Save::usage();
+};
+
+quietly 'a history saved and resumed' => sub {
+	my $history = Game::Terminal::Kit::History->new(name => 'moves', save => sub { $_[0] }, load => sub { $_[0] });
+	$history->start('a')->record('b');
+	my $saved = $history->saved('c');
+	my $resumed = Game::Terminal::Kit::History->new(save => sub { $_[0] }, load => sub { $_[0] });
+	$resumed->start($resumed->resume($saved));
+	$resumed->steps; $resumed->at; $resumed->undo;
+};
+
+quietly 'a replay built, drawn and stepped' => sub {
+	my $replay = Game::Terminal::Kit::Replay->new(steps => [qw/a b c/], mark => 1,
+		load => sub { $_[0] }, draw => sub { "board $_[0]" }, log => Game::Terminal::Kit::Log->new);
+	for my $key (@keys) { $replay->lines; $replay->step($key); $replay->tick }
+};
+
+my %may = (run => 1, draw => 1, 'Save::read_file' => 1, 'Save::write_file' => 1);
 my @reads_or_writes;
-for my $name (qw/Canvas Choose Form Frame History Line Log Options Picker Steer Ticker Widget/) {
+for my $name (qw/Canvas Choose Form Frame History Line Log Options Picker Replay Save Steer Ticker Widget/) {
 	my $file = "lib/Game/Terminal/Kit/$name.pm";
 	open my $fh, '<', $file or die "cannot read $file: $!";
 	my $in = '';
 	while (my $line = <$fh>) {
 		last if $line =~ m/^__END__/;
 		$in = $1 if $line =~ m/^sub (\w+)/;
-		next if $in eq 'run' || $in eq 'draw';
+		next if $may{$in} || $may{"$name\::$in"};
 		push @reads_or_writes, "$name\::$in line $." if $line =~ m/\bprint\b|\bprintf\b|\breadline\b|ReadKey|<\$|\bSTD(?:IN|OUT|ERR)\b/;
 	}
 }

@@ -1,5 +1,6 @@
 Changes
 ignore.txt
+LICENSE
 lib/Game/Terminal/Kit.pm
 lib/Game/Terminal/Kit/Canvas.pm
 lib/Game/Terminal/Kit/Choose.pm
@@ -11,7 +12,9 @@ lib/Game/Terminal/Kit/Line.pm
 lib/Game/Terminal/Kit/Log.pm
 lib/Game/Terminal/Kit/Options.pm
 lib/Game/Terminal/Kit/Picker.pm
+lib/Game/Terminal/Kit/Replay.pm
 lib/Game/Terminal/Kit/Run.pm
+lib/Game/Terminal/Kit/Save.pm
 lib/Game/Terminal/Kit/Screen.pm
 lib/Game/Terminal/Kit/Steer.pm
 lib/Game/Terminal/Kit/Test/Handle.pm
@@ -40,10 +43,11 @@ t/15-no-readkey.t
 t/16-no-io.t
 t/17-together.t
 t/18-history.t
+t/19-save.t
+t/20-history-save.t
+t/21-replay.t
 t/lib/absent/Term/ReadKey.pm
 t/manifest.t
 t/pod-coverage.t
 t/pod.t
 xt/boilerplate.t
-META.yml                                 Module YAML meta-data (added by MakeMaker)
-META.json                                Module JSON meta-data (added by MakeMaker)

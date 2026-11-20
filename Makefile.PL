@@ -19,7 +19,7 @@ my %WriteMakefileArgs = (
     },
     PREREQ_PM => {
         'Object::Proto::Sugar' => '0.05',
-        'State::Store' => '0.01',
+        'State::Store' => '0.02',
     },
     META_MERGE => {
         'meta-spec' => { version => 2 },

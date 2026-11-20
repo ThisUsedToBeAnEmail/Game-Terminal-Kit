@@ -128,7 +128,7 @@ subtest 'each thing that can be wrong' => sub {
 subtest 'the lists' => sub {
 	plan tests => 2;
 	is_deeply [Game::Terminal::Kit::Options::types()], [qw/bool enum flag int str/], 'the types';
-	is_deeply [Game::Terminal::Kit::Options::reserved()], [qw/ascii extra help pick version/], 'the kept names';
+	is_deeply [Game::Terminal::Kit::Options::reserved()], [qw/ascii extra help pick replay resume save version/], 'the kept names';
 };
 
 done_testing;

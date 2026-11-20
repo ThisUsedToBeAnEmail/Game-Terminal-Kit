@@ -6,10 +6,10 @@ use warnings;
 
 use Text::ParseWords ();
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 my %TYPE = map { $_ => 1 } qw/int enum flag bool str/;
-my %RESERVED = map { $_ => 1 } qw/ascii pick help version extra/;
+my %RESERVED = map { $_ => 1 } qw/ascii pick help version extra save resume replay/;
 
 sub types { return sort keys %TYPE }
 
@@ -130,7 +130,7 @@ Game::Terminal::Kit::Options - the options a game offers before it starts
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 
@@ -231,7 +231,9 @@ C<extra> is split as a shell would split it and put last.
 What is wrong with a list of fields, one sentence each; nothing when it is
 sound. A name must be lower case letters, digits and dashes and may not be
 there twice; C<ascii>, C<pick>, C<help>, C<version> and C<extra> are kept by
-the launcher; every field needs help and a type; a number needs its ends in
+the launcher, and C<save>, C<resume> and C<replay> by
+L<Game::Terminal::Kit::Save>, whose file names go on the command line and
+not in a form; every field needs help and a type; a number needs its ends in
 order and a choice needs two.
 
 =head2 types

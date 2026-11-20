@@ -8,7 +8,7 @@ use Object::Proto::Sugar -types;
 use Game::Terminal::Kit::Picker;
 use Game::Terminal::Kit::Widget;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has question => (
 	is => 'rw',
@@ -71,7 +71,7 @@ Game::Terminal::Kit::Choose - one question with a few answers
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =head1 SYNOPSIS
 
